@@ -1,0 +1,281 @@
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .url-input {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 90%;
+        margin: 20px 0;
+        max-width: 800px;
+        gap: 1px;
+    }
+
+    .input-url {
+        width: 100%;
+        height: 50px;
+        font-size: large;
+        padding: 0 10px;
+        border-radius: 10px;
+
+    }
+
+    .url-submit {
+        background-color: #1db954;
+        color: white;
+        width: 200px;
+        height: 50px;
+        border: none;
+        border-radius: 10px;
+        font-size: large;
+    }
+
+    .url-submit:hover {
+        background-color: #0e5225;
+    }
+
+    .url-submit:disabled {
+        background-color: gray;
+    }
+
+    .album-title {
+        color: green;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .song-list {
+        width: 50%;
+        margin: auto;
+        text-align: left;
+    }
+
+    .song-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid gray;
+        margin-bottom: 15px;
+    }
+
+    .song-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    /* .song-number {
+            background-color: darkslategray;
+            font-weight: bold;
+            width: 30px;
+            color: black;
+            padding: 5px 10px;
+            margin-right: 10px;
+        } */
+
+    .download-btn {
+        background-color: #1db954;
+        color: white;
+        font-weight: bold;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 5px;
+        width: 100px;
+        height: 40px;
+    }
+
+    .download-btn:hover {
+        background-color: #0e5225;
+    }
+
+    .spinner {
+        display: none;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+        height: 50px;
+        width: 70px;
+    }
+
+    .spinner-button {
+        justify-content: center;
+        align-items: center;
+        height: 40px;
+        width: 60px;
+    }
+
+    .album-img {
+        display: none;
+        flex-direction: column;
+        gap: 20px;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .album-name {
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .error-msg {
+        color: red;
+        font-size: 20px;
+        font-weight: bold;
+        margin: 20px 0;
+    }
+</style>
+<div class="wrapper">
+    <div class="url-input">
+        <input class="input-url" type="text" id="url" placeholder="Enter URL">
+        <button class="url-submit" onclick="fetchTracks()">Download</button>
+    </div>
+    <div>
+        <p class="error-msg" style="display: none;"></p>
+    </div>
+    <div class="spinner">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+            <rect fill="#1db954" stroke="#1db954" stroke-width="15" width="30" height="30" x="25" y="85">
+                <animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;"
+                    keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.4"></animate>
+            </rect>
+            <rect fill="#1db954" stroke="#1db954" stroke-width="15" width="30" height="30" x="85" y="85">
+                <animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;"
+                    keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.2"></animate>
+            </rect>
+            <rect fill="#1db954" stroke="#1db954" stroke-width="15" width="30" height="30" x="145" y="85">
+                <animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;"
+                    keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="0"></animate>
+            </rect>
+        </svg>
+    </div>
+    <div class="album-img">
+        <img src="" alt="album" width="200" height="200">
+        <p class="album-name"></p>
+    </div>
+    <div class="tracks"></div>
+</div>
+
+<script>
+    const api_url = "http://127.0.0.1:5000";
+
+    const url_submit_button = document.querySelector('.url-submit');
+    const url_input = document.querySelector('.url-input');
+    const error_msg = document.querySelector('.error-msg');
+    const tracks_element = document.querySelector('.tracks');
+    const spinner = document.querySelector('.spinner');
+    const animation_button = document.createElement("div");
+    const album_img = document.querySelector('.album-img');
+    animation_button.classList.add('spinner-button');
+    animation_button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect fill="#1db954" stroke="#1db954" stroke-width="15" width="30" height="30" x="25" y="85"><animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.4"></animate></rect><rect fill="#1db954" stroke="#1db954" stroke-width="15" width="30" height="30" x="85" y="85"><animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.2"></animate></rect><rect fill="#1db954" stroke="#1db954" stroke-width="15" width="30" height="30" x="145" y="85"><animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="0"></animate></rect></svg>';
+
+
+
+    function fetchTracks() {
+        error_msg.style.display = 'none';
+        const url = document.getElementById('url').value;
+        if (url === '' || url === null) {
+            error_msg.style.display = 'block';
+            error_msg.innerHTML = 'Please enter a valid URL';
+        }
+        else if (!url.includes('https://open.spotify.com/')) {
+            error_msg.style.display = 'block';
+            error_msg.innerHTML = 'Please enter a valid Spotify URL';
+        }
+        else {
+            spinner.style.display = 'block';
+            url_submit_button.disabled = true;
+            url_submit_button.innerHTML = 'Downloading...';
+            request = `${api_url}/tracks?url=${url}`;
+            fetch(request, {
+                method: 'GET',
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.msg) {
+                        error_msg.style.display = 'block';
+                        error_msg.innerHTML = "An error occured. Please try again later (After 1 Minute)";
+                        spinner.style.display = 'none';
+                        url_submit_button.disabled = false;
+                        url_submit_button.innerHTML = 'Download';
+                        return;
+                    }
+                    let tracks = data.apiResponse.data;
+                    tracks_list = tracks.map((track, index) => {
+                        // <span class="song-number">${index + 1}</span>
+                        return `<div class="song-item">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div class="song-cover">
+                                        <img src="${track.cover}" alt="cover" width="50" height="50">
+                                    </div>
+                                    <div class="song-info">
+                                            <p><strong>${track.album}</strong></p>
+                                            <p style="color: gray; font-size: 14px;">${track.artist}</p>
+                                    </div>
+                                </div>
+                                <button class="download-btn" onClick="downloadTracks(this, \'${track.url}\')">Download</button>
+                            </div>`
+                    })
+                    spinner.style.display = 'none';
+                    album_img.querySelector('img').src = tracks[0].cover_url;
+                    album_img.querySelector('.album-name').innerHTML = tracks[0].album_name;
+                    tracks_element.innerHTML = tracks_list.join('');
+                    url_submit_button.disabled = false;
+                    url_submit_button.innerHTML = 'Download';
+                    album_img.style.display = 'flex';
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+    }
+
+    function downloadTracks(e, url) {
+        e.style.display = 'none';
+        e.parentElement.appendChild(animation_button);
+
+        request = `${api_url}/download?url=${url}`;
+        fetch(request, {
+            method: 'GET',
+        })
+            .then(response => response.json())
+            .then(data => {
+                let url = data.file_url;
+                if (url === null) {
+                    error = document.createElement('p');
+                    error.innerHTML = 'An error occured. Please try again later (After 1 Minute)';
+                    e.parentNode.removeChild(animation_button);
+                    e.style.display = 'inline-block';
+                    setTimeout(() => {
+                        e.parentElement.appendChild(error);
+                        e.style.display = 'inline-block';
+                    }, 60000);
+                    return;
+                }
+
+                const a = document.createElement("a");
+                e.style.display = 'inline-block';
+                e.parentNode.removeChild(animation_button);
+                a.href = url;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                e.parentElement.appendChild(error);
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+</script>
